@@ -267,12 +267,13 @@ struct MapViewRepresentable: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-            let activeRecognizers = ([mapView as UIView] + mapView.subviews)
-                .compactMap(\.gestureRecognizers)
-                .flatMap { $0 }
-                .filter { recognizer in
-                    recognizer.state == .began || recognizer.state == .changed
-                }
+            let gestureViews: [UIView] = [mapView] + mapView.subviews
+            let gestureRecognizers: [UIGestureRecognizer] = gestureViews.flatMap { view in
+                view.gestureRecognizers ?? []
+            }
+            let activeRecognizers = gestureRecognizers.filter { recognizer in
+                recognizer.state == .began || recognizer.state == .changed
+            }
             let hasActiveGesture = !activeRecognizers.isEmpty
 
             // Pinching updates the viewport/name granularity only. MapKit can
