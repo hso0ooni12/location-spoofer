@@ -9,7 +9,6 @@ struct PaopaoLocationSpooferApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.locale, AppLocalization.locale)
         }
     }
 }

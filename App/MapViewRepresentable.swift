@@ -34,6 +34,7 @@ struct MapViewRepresentable: UIViewRepresentable {
     let selection: MapSelection
     let initialViewportMeters: CLLocationDistance
     let cameraCommand: MapCameraCommand?
+    let mapType: MKMapType
     let onRealtimeLocationChanged: (CLLocation) -> Void
     let onUserCenterChanged: (CLLocationCoordinate2D, CLLocationDistance) -> Void
     let onViewportChanged: (CLLocationDistance) -> Void
@@ -48,6 +49,7 @@ struct MapViewRepresentable: UIViewRepresentable {
         let map = MKMapView()
         map.delegate = context.coordinator
         map.showsUserLocation = true
+        map.mapType = mapType
         let initialDistance = max(50, initialViewportMeters)
         RuntimeLogger.info("APP", "地图", "makeUIView", details: [
             "zoom": String(initialDistance),
@@ -66,7 +68,8 @@ struct MapViewRepresentable: UIViewRepresentable {
         // Center pin — positioned relative to geographic center, not Auto Layout
         let pinSize: CGFloat = 38
         let sizeCfg = UIImage.SymbolConfiguration(pointSize: pinSize, weight: .semibold)
-        let paletteCfg = UIImage.SymbolConfiguration(paletteColors: [.white, .red])
+        let brandBlue = UIColor(red: 0.17, green: 0.36, blue: 0.91, alpha: 1)
+        let paletteCfg = UIImage.SymbolConfiguration(paletteColors: [.white, brandBlue])
         let pinImage = UIImage(systemName: "mappin",
                                withConfiguration: sizeCfg.applying(paletteCfg))
         let pin = UIImageView(image: pinImage)
@@ -145,6 +148,9 @@ struct MapViewRepresentable: UIViewRepresentable {
 
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.parent = self
+        if map.mapType.rawValue != mapType.rawValue {
+            map.mapType = mapType
+        }
         context.coordinator.consume(cameraCommand, on: map)
     }
 

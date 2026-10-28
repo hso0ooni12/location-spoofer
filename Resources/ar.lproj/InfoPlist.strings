@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "XS Location";
+"NSLocationWhenInUseUsageDescription" = "يلزم الوصول إلى موقعك لعرضه والتحقق من تفعيل الموقع الافتراضي.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "يلزم الوصول إلى موقعك لعرضه والتحقق من تفعيل الموقع الافتراضي.";

@@ -60,6 +60,7 @@ struct MapHomeView: View {
     @ObservedObject private var net = NetworkMonitor.shared
 
     @State private var searchText = ""
+    @AppStorage("xs-location.map-style") private var mapStyleRawValue = MKMapType.standard.rawValue
     @State private var searchResults: [SearchLocationResult] = []
     @State private var isSearching = false
     @State private var searchRequestID: UInt64 = 0
@@ -100,6 +101,10 @@ struct MapHomeView: View {
     @State private var activeSpoofLon: Double?
     @State private var lastSpoofDiagnosisSystem: CoordinateConverter.MapCoordinateSystem?
     @State private var hasLoggedSpoofDiagnosis = false
+
+    private var selectedMapType: MKMapType {
+        MKMapType(rawValue: mapStyleRawValue) ?? .standard
+    }
 
     init(setup: SetupCoordinator) {
         self.setup = setup
@@ -166,6 +171,7 @@ struct MapHomeView: View {
                 selection: mapState.selection,
                 initialViewportMeters: mapState.viewportMeters,
                 cameraCommand: mapState.cameraCommand,
+                mapType: selectedMapType,
                 onRealtimeLocationChanged: { location in
                     handleNativeRealtimeLocation(location)
                 },
@@ -212,6 +218,10 @@ struct MapHomeView: View {
 
             VStack(spacing: 10) {
                 topControls
+                HStack {
+                    Spacer()
+                    mapStyleControl
+                }
                 if !searchResults.isEmpty || !searchError.isEmpty { searchResultList }
                 Spacer()
                 // 右下角按钮
@@ -225,9 +235,11 @@ struct MapHomeView: View {
                         } label: {
                             Image(systemName: "map.fill")
                                 .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(XSTheme.accent)
                                 .frame(width: 44, height: 44)
-                                .background(.regularMaterial, in: Circle())
-                                .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                                .background(.white.opacity(0.96), in: Circle())
+                                .overlay(Circle().stroke(XSTheme.border, lineWidth: 1))
+                                .shadow(color: XSTheme.ink.opacity(0.12), radius: 7, y: 3)
                         }
                         Button {
                             requestRealtimeLocation()
@@ -235,14 +247,17 @@ struct MapHomeView: View {
                             if realtime.isRequesting {
                                 ProgressView()
                                     .frame(width: 44, height: 44)
-                                    .background(.regularMaterial, in: Circle())
-                                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                                    .background(.white.opacity(0.96), in: Circle())
+                                    .overlay(Circle().stroke(XSTheme.border, lineWidth: 1))
+                                    .shadow(color: XSTheme.ink.opacity(0.12), radius: 7, y: 3)
                             } else {
                                 Image(systemName: "location.fill")
                                     .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(XSTheme.accent)
                                     .frame(width: 44, height: 44)
-                                    .background(.regularMaterial, in: Circle())
-                                    .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+                                    .background(.white.opacity(0.96), in: Circle())
+                                    .overlay(Circle().stroke(XSTheme.border, lineWidth: 1))
+                                    .shadow(color: XSTheme.ink.opacity(0.12), radius: 7, y: 3)
                             }
                         }
                         .disabled(realtimeButtonTask != nil || realtimeRequestTask != nil || realtime.isRequesting)
@@ -407,10 +422,37 @@ struct MapHomeView: View {
     }
 
     private var topControls: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 10) {
+            HStack(spacing: 9) {
+                XSBrandMark(size: 38)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("XS Location")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(XSTheme.ink)
+                    Text("Choose a place on the map")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(XSTheme.secondaryText)
+                }
+                Spacer(minLength: 4)
+                XSLanguagePicker()
+                Menu {
+                    Button { activeSheet = .logs } label: { Label("Logs", systemImage: "list.bullet.rectangle") }
+                    Button { activeSheet = .settings } label: { Label("Settings", systemImage: "gearshape") }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(XSTheme.ink)
+                        .frame(width: 40, height: 40)
+                        .background(.white, in: Circle())
+                        .overlay(Circle().stroke(XSTheme.border, lineWidth: 1))
+                        .shadow(color: XSTheme.ink.opacity(0.08), radius: 8, y: 3)
+                        .contentShape(Circle())
+                }
+                .accessibilityLabel("More")
+            }
             HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("搜索地点或坐标", text: $searchText)
+                Image(systemName: "magnifyingglass").foregroundStyle(XSTheme.secondaryText)
+                TextField("Search places or coordinates", text: $searchText)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search).onSubmit(doSearch)
                 if isSearching { ProgressView().controlSize(.small) }
                 else if !searchText.isEmpty {
@@ -424,23 +466,52 @@ struct MapHomeView: View {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                     }.buttonStyle(.plain)
                 }
-                Button(action: doSearch) { Image(systemName: "arrow.right.circle.fill").font(.title3) }
+                Button(action: doSearch) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(XSTheme.accent)
+                }
                     .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSearching)
             }
             .padding(.horizontal, 14).frame(height: 48)
-            .background(.regularMaterial, in: Capsule())
-            .shadow(color: .black.opacity(0.13), radius: 9, y: 4)
-            Menu {
-                Button { activeSheet = .logs } label: { Label("日志", systemImage: "list.bullet.rectangle") }
-                Button { activeSheet = .settings } label: { Label("设置", systemImage: "gearshape") }
-            } label: {
-                Image(systemName: "ellipsis").font(.system(size: 20, weight: .bold))
-                    .frame(width: 48, height: 48)
-                    .background(.regularMaterial, in: Circle())
-                    .shadow(color: .black.opacity(0.13), radius: 9, y: 4)
-                    .contentShape(Circle())
-            }.accessibilityLabel("更多")
+            .background(.white, in: Capsule())
+            .overlay(Capsule().stroke(XSTheme.border, lineWidth: 1))
+            .shadow(color: XSTheme.ink.opacity(0.08), radius: 9, y: 4)
         }
+    }
+
+    private var mapStyleControl: some View {
+        HStack(spacing: 4) {
+            mapStyleButton(title: "Standard", icon: "map.fill", style: .standard)
+            mapStyleButton(title: "Satellite", icon: "globe", style: .satellite)
+        }
+        .padding(4)
+        .background(.white.opacity(0.97), in: Capsule())
+        .overlay(Capsule().stroke(XSTheme.border, lineWidth: 1))
+        .shadow(color: XSTheme.ink.opacity(0.11), radius: 9, y: 4)
+    }
+
+    private func mapStyleButton(title: LocalizedStringKey, icon: String, style: MKMapType) -> some View {
+        let isSelected = selectedMapType.rawValue == style.rawValue
+        return Button {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                mapStyleRawValue = style.rawValue
+            }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(isSelected ? .white : XSTheme.secondaryText)
+                .padding(.horizontal, 11)
+                .frame(height: 34)
+                .background {
+                    if isSelected {
+                        Capsule().fill(XSTheme.accent)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     // 搜索列表：动态高度，不写死
@@ -558,7 +629,7 @@ struct MapHomeView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12).padding(.horizontal, 16)
                     }
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 14))
+                    .background(XSTheme.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .foregroundStyle(.white)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
@@ -567,8 +638,9 @@ struct MapHomeView: View {
             .padding(.top, 4)
         }
         .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: .black.opacity(0.16), radius: 14, y: 6)
+        .background(.white.opacity(0.97), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(XSTheme.border, lineWidth: 1))
+        .shadow(color: XSTheme.ink.opacity(0.14), radius: 16, y: 7)
     }
 
 
@@ -599,7 +671,7 @@ struct MapHomeView: View {
 
     private var buttonColor: Color {
         switch spoofState {
-        case .idle: return .blue
+        case .idle: return XSTheme.accent
         case .verifying: return .gray
         case .active: return .green
         }

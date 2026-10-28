@@ -1,5 +1,5 @@
 /* App display name */
-"CFBundleDisplayName" = "Location Spoofer";
+"CFBundleDisplayName" = "XS Location";
 
 /* Location permission prompts */
 "NSLocationWhenInUseUsageDescription" = "用于显示和验证虚拟定位是否生效";

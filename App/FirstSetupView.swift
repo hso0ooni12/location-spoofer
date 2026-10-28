@@ -27,7 +27,7 @@ enum SetupStep: Int, CaseIterable {
         switch self {
         case .mode: return "选择模式"
         case .proxy: return "Wi-Fi"
-        case .cert: return "证书"
+        case .cert: return "Profile"
         case .thirdPartyClient: return "选择客户端"
         case .thirdPartyImport: return "导入并检测"
         }
@@ -85,7 +85,27 @@ struct FirstSetupView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                HStack(spacing: 11) {
+                    XSBrandMark(size: 42)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("XS Location")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(XSTheme.ink)
+                        Text("Simple setup. Precise selection.")
+                            .font(.caption)
+                            .foregroundStyle(XSTheme.secondaryText)
+                    }
+                    Spacer(minLength: 4)
+                    XSLanguagePicker()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 14)
+
                 progress
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 4)
+
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
@@ -98,7 +118,9 @@ struct FirstSetupView: View {
                             }
                             if let displayedVerificationResult { resultView(displayedVerificationResult) }
                         }
-                        .padding(20)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 24)
                     }
                     .onChange(of: thirdPartyFailureLog) { failureLog in
                         guard step == .thirdPartyImport, failureLog != nil else { return }
@@ -120,18 +142,23 @@ struct FirstSetupView: View {
                             returnToPreviousStep()
                         } label: {
                             Label("上一步", systemImage: "chevron.left")
+                                .frame(minHeight: 48)
+                                .padding(.horizontal, 12)
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.plain)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(XSTheme.border, lineWidth: 1))
                         .disabled(isVerifying || thirdPartyProxy.isRequesting)
                         Spacer(minLength: 12)
                         primaryAction
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 14)
+                    .background(.white)
                 }
             }
-            .navigationTitle("开始使用")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(XSTheme.canvas.ignoresSafeArea())
+            .navigationBarHidden(true)
             .sheet(isPresented: $showDiagnostics) {
                 NavigationView {
                     RuntimeLogsView(
@@ -182,20 +209,26 @@ struct FirstSetupView: View {
     }
 
     private var progress: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             ForEach(visibleSteps, id: \.rawValue) { value in
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(value.rawValue <= step.rawValue ? Color.blue : Color.gray.opacity(0.3))
-                        .frame(width: 10, height: 10)
-                    Text(LocalizedStringKey(value.title)).font(.caption).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 7) {
+                    HStack(spacing: 6) {
+                        Image(systemName: value.rawValue <= step.rawValue ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(value.rawValue <= step.rawValue ? XSTheme.accent : XSTheme.secondaryText.opacity(0.55))
+                        Text(LocalizedStringKey(value.title))
+                            .font(.caption.weight(value == step ? .semibold : .medium))
+                            .foregroundStyle(value == step ? XSTheme.ink : XSTheme.secondaryText)
+                            .lineLimit(1)
+                    }
+                    Capsule()
+                        .fill(value.rawValue <= step.rawValue ? XSTheme.accent : XSTheme.border)
+                        .frame(height: 3)
                 }
-                if value != visibleSteps.last {
-                    Rectangle().fill(Color.gray.opacity(0.3)).frame(width: 28, height: 2)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 10)
     }
 
     private var visibleSteps: [SetupStep] {
@@ -311,63 +344,114 @@ struct FirstSetupView: View {
     private var proxyStep: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("第 1 步")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.blue)
-                Text("设置当前 Wi-Fi 代理")
-                    .font(.title2.bold())
-                Text("设置 → 无线局域网 → 当前网络右侧 ⓘ → HTTP 代理 → 手动。")
+                Text("STEP 1 OF 2 · WI-FI")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.1)
+                    .foregroundStyle(XSTheme.accent)
+                Text("Connect your Wi-Fi proxy")
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
+                    .foregroundStyle(XSTheme.ink)
+                Text("A quick one-time setup lets XS Location work with your current Wi-Fi network.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(XSTheme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            XSSetupIllustration(kind: .proxy)
+
             if !setup.message.isEmpty {
                 Label(setup.message, systemImage: "exclamationmark.triangle.fill")
                     .font(.footnote)
                     .foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Follow these three steps")
+                    .font(.headline)
+                    .foregroundStyle(XSTheme.ink)
+                instructionRow(1, "Open Settings → Wi-Fi and tap ⓘ beside the connected network.")
+                instructionRow(2, "Choose Configure Proxy, then select Manual.")
+                instructionRow(3, "Enter the server and port below, then save.")
+            }
+            .padding(16)
+            .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(XSTheme.border, lineWidth: 1))
+
+            XSSettingsGuidePreview(kind: .proxy)
+
             VStack(spacing: 0) {
-                proxyValueRow(title: "服务器", value: "127.0.0.1")
+                HStack {
+                    Label("Proxy details", systemImage: "network")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(XSTheme.ink)
+                    Spacer()
+                    Text("LOCAL")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .tracking(0.8)
+                        .foregroundStyle(XSTheme.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(XSTheme.sky, in: Capsule())
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 15)
+                proxyValueRow(title: "Server", value: "127.0.0.1")
                 Divider().padding(.leading, 16)
-                proxyValueRow(title: "端口", value: "8888")
+                proxyValueRow(title: "Port", value: "8888")
             }
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(XSTheme.border, lineWidth: 1))
 
             Button { openSettings(.wifi) } label: {
-                Label("打开 Wi-Fi 设置", systemImage: "wifi")
+                Label("Open Wi-Fi Settings", systemImage: "wifi")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(XSPrimaryButtonStyle())
 
-            Text("设置完成后返回此处并点“继续”。")
+            Label("When you return, we’ll check that the proxy is ready.", systemImage: "checkmark.shield")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(XSTheme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var certificateStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 17) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("第 2 步")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.blue)
-                Text("下载并信任描述文件")
-                    .font(.title2.bold())
-                Text("下载证书后，在 iOS 设置中安装并开启完全信任。")
+                Text("STEP 2 OF 2 · PROFILE")
+                    .font(.caption.weight(.bold))
+                    .tracking(1.1)
+                    .foregroundStyle(XSTheme.accent)
+                Text("Install and trust the profile")
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
+                    .foregroundStyle(XSTheme.ink)
+                Text("Complete these three checks in iOS Settings. Your location stays protected until the profile is trusted.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(XSTheme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+
+            XSSetupIllustration(kind: .profile)
+
             if !setup.message.isEmpty {
                 Label(setup.message, systemImage: "exclamationmark.triangle.fill")
                     .font(.footnote)
                     .foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(.orange.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+
             certificateCard(
-                title: "下载描述文件",
-                icon: "arrow.down.circle",
-                description: "点“下载”，然后在 iOS 提示中选择“允许”。",
-                actionTitle: "下载",
+                stepNumber: 1,
+                title: "Download the profile",
+                icon: "arrow.down.circle.fill",
+                description: "Tap Download. If iOS asks for permission, choose Allow, then open Settings → Profile Downloaded.",
+                actionTitle: "Download profile",
+                confirmationTitle: "I downloaded it",
                 actionIcon: "arrow.down.circle.fill",
                 complete: downloadedDone,
                 action: {
@@ -381,22 +465,36 @@ struct FirstSetupView: View {
                 },
                 markComplete: { downloadedDone = true }
             )
+            XSSettingsGuidePreview(kind: .install)
             certificateCard(
-                title: "安装并信任",
-                icon: "shield.checkered",
-                description: "在设置顶部点“已下载描述文件”；若没有，进入“通用 → VPN 与设备管理”安装。再到“通用 → 关于本机 → 证书信任设置”，为 Location Spoofer CA 开启完全信任。",
-                actionTitle: "打开设置",
-                actionIcon: "shield.checkered",
-                complete: installedDone && trustedDone,
+                stepNumber: 2,
+                title: "Install the profile",
+                icon: "gearshape.fill",
+                description: "In Settings, open General → VPN & Device Management, select the downloaded profile, then tap Install.",
+                actionTitle: "Open Settings",
+                confirmationTitle: "I installed it",
+                actionIcon: "gearshape.fill",
+                complete: installedDone,
                 action: { openSettings(.general) },
-                markComplete: {
-                    installedDone = true
-                    trustedDone = true
-                }
+                markComplete: { installedDone = true }
             )
-            Text("完成后返回此处并点“继续”。")
+            XSSettingsGuidePreview(kind: .trust)
+            certificateCard(
+                stepNumber: 3,
+                title: "Enable full trust",
+                icon: "checkmark.shield.fill",
+                description: "Open General → About → Certificate Trust Settings and turn on full trust for Location Spoofer CA.",
+                actionTitle: "Open Settings",
+                confirmationTitle: "I enabled trust",
+                actionIcon: "checkmark.shield.fill",
+                complete: trustedDone,
+                action: { openSettings(.general) },
+                markComplete: { trustedDone = true }
+            )
+            Label("When all three steps are checked, XS Location verifies the setup.", systemImage: "checkmark.shield")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(XSTheme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -668,15 +766,15 @@ struct FirstSetupView: View {
     }
 
     private func instructionRow(_ number: Int, _ text: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: 10) {
             Text("\(number)")
-                .font(.caption2.bold())
+                .font(.caption.weight(.bold))
                 .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(Color.blue, in: Circle())
+                .frame(width: 25, height: 25)
+                .background(XSTheme.accent, in: Circle())
             Text(text)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.subheadline)
+                .foregroundStyle(XSTheme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -752,39 +850,74 @@ struct FirstSetupView: View {
     }
 
     private func certificateCard(
+        stepNumber: Int,
         title: LocalizedStringKey,
         icon: String,
         description: LocalizedStringKey,
         actionTitle: LocalizedStringKey,
+        confirmationTitle: LocalizedStringKey,
         actionIcon: String,
         complete: Bool,
         action: @escaping () -> Void,
         markComplete: @escaping () -> Void
     ) -> some View {
-        GroupBox(label: Label(title, systemImage: icon)) {
-            VStack(alignment: .leading, spacing: 12) {
-                Color.clear.frame(height: 0).padding(.top, 2)
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 10) {
-                    Button(action: action) {
-                        Label(actionTitle, systemImage: actionIcon).frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.blue)
-                    Button(action: markComplete) {
-                        (complete
-                            ? Label("已完成 ✓", systemImage: "checkmark.circle.fill")
-                            : Label("已完成", systemImage: "circle"))
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(complete ? .green : .secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(complete ? Color.green.opacity(0.12) : XSTheme.sky)
+                    Image(systemName: complete ? "checkmark" : icon)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(complete ? Color.green : XSTheme.accent)
                 }
+                .frame(width: 42, height: 42)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 7) {
+                        Text("\(stepNumber)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(XSTheme.accent)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(XSTheme.sky, in: Capsule())
+                        Text(title)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(XSTheme.ink)
+                    }
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(XSTheme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+
+            HStack(spacing: 9) {
+                Button(action: action) {
+                    Label(actionTitle, systemImage: actionIcon)
+                        .font(.caption.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 42)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(XSTheme.accent)
+
+                Button(action: markComplete) {
+                    Label(
+                        complete ? "Completed" : confirmationTitle,
+                        systemImage: complete ? "checkmark.circle.fill" : "circle"
+                    )
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .frame(maxWidth: .infinity, minHeight: 42)
+                }
+                .buttonStyle(.bordered)
+                .tint(complete ? .green : XSTheme.secondaryText)
             }
         }
+        .padding(15)
+        .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(complete ? Color.green.opacity(0.30) : XSTheme.border, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -829,7 +962,7 @@ struct FirstSetupView: View {
             } label: {
                 actionLabel("继续")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(XSPrimaryButtonStyle())
             .disabled(isVerifying)
         } else if step == .cert {
             Button {
@@ -837,7 +970,7 @@ struct FirstSetupView: View {
             } label: {
                 actionLabel("继续")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(XSPrimaryButtonStyle())
             .disabled(!certificateStepsComplete || isVerifying)
         } else if step == .thirdPartyClient {
             Button {
@@ -845,14 +978,14 @@ struct FirstSetupView: View {
             } label: {
                 actionLabel("完成")
             }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(XSPrimaryButtonStyle())
         } else {
             Button {
                 verifyThirdPartyConnection()
             } label: {
                 actionLabel("完成")
             }
-            .buttonStyle(.borderedProminent)
+                .buttonStyle(XSPrimaryButtonStyle())
             .disabled(isVerifying || thirdPartyProxy.isRequesting)
         }
     }

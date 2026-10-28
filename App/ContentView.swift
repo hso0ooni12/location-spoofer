@@ -4,6 +4,7 @@ import UIKit
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var setup = SetupCoordinator()
+    @ObservedObject private var appLanguage = AppLanguageStore.shared
     @ObservedObject private var runtimeMode = ProxyRuntimeModeStore.shared
     @ObservedObject private var remoteConfiguration = AppRemoteConfigurationStore.shared
     @State private var phase: AppPhase = .splash
@@ -16,15 +17,19 @@ struct ContentView: View {
         Group {
             switch phase {
             case .splash:
-                VStack(spacing: 16) {
-                    Image(systemName: "location.fill")
-                        .font(.system(size: 48)).foregroundStyle(.blue)
-                    ProgressView()
+                VStack(spacing: 13) {
+                    XSBrandMark(size: 64)
+                    Text("XS Location")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(XSTheme.ink)
+                    ProgressView().tint(XSTheme.accent)
                     (runtimeMode.hasSelectedMode && runtimeMode.mode == .localWiFi
                          ? Text("正在初始化地图与本地代理…")
                          : Text("正在初始化地图…"))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(XSTheme.canvas.ignoresSafeArea())
             case .setup:
                 FirstSetupView(setup: setup, onComplete: finishInitialSetup)
             case .map:
@@ -45,6 +50,8 @@ struct ContentView: View {
         .alert(item: $updatePrompt) { prompt in
             updateAlert(for: prompt)
         }
+        .environment(\.locale, appLanguage.locale)
+        .environment(\.layoutDirection, appLanguage.layoutDirection)
     }
 
     @MainActor

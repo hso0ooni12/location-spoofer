@@ -5,29 +5,21 @@ import Foundation
 /// and Chinese is second; this app intentionally falls back to English instead.
 enum AppLocalization {
     static func identifier(for preferredLanguages: [String]) -> String {
-        guard let first = preferredLanguages.first,
-              Locale(identifier: first).languageCode == "zh" else {
-            return "en"
+        guard let first = preferredLanguages.first else { return "en" }
+        let languageCode = Locale(identifier: first).languageCode
+        if languageCode == "ar" { return "ar" }
+        if languageCode == "zh" {
+            return Bundle.preferredLocalizations(
+                from: ["zh-Hans", "zh-Hant"], forPreferences: [first]
+            ).first ?? "zh-Hans"
         }
-        return Bundle.preferredLocalizations(
-            from: ["zh-Hans", "zh-Hant"], forPreferences: [first]
-        ).first ?? "zh-Hans"
+        return "en"
     }
 
-    static let identifier = identifier(for: Locale.preferredLanguages)
-    static let locale = Locale(identifier: identifier)
-
-    // An explicit .lproj bundle also covers String(localized:) calls made outside
-    // SwiftUI views, where the view's locale environment is not available.
-    private static let localizedBundle: Bundle = {
-        guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
-              let bundle = Bundle(path: path) else {
-            return .main
-        }
-        return bundle
-    }()
+    static var identifier: String { AppLanguageStore.shared.languageCode }
+    static var locale: Locale { AppLanguageStore.shared.locale }
 
     static func string(_ value: String.LocalizationValue) -> String {
-        String(localized: value, bundle: localizedBundle)
+        String(localized: value, bundle: .main, locale: locale)
     }
 }
