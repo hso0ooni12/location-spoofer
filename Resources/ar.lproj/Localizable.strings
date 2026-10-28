@@ -28,7 +28,7 @@
 "When you return, we’ll check that the proxy is ready." = "بعد الرجوع، سنتحقق من جاهزية البروكسي.";
 "STEP 2 OF 2 · PROFILE" = "الخطوة ٢ من ٢ · الملف";
 "Install and trust the profile" = "ثبّت الملف وامنحه الثقة";
-"Complete these three checks in iOS Settings. Your location stays protected until the profile is trusted." = "أكمل التحققات الثلاثة من إعدادات iOS. لن يبدأ التطبيق حتى تثق بالملف.";
+"Install the downloaded profile, then enable full trust in iOS Settings. XS Location verifies the setup before you begin." = "ثبّت الملف الذي نزّلته، ثم فعّل الثقة الكاملة من إعدادات iOS. يتحقق XS Location من الإعداد قبل البدء.";
 "Profile installation illustration" = "رسم توضيحي لتثبيت الملف";
 "Download" = "تنزيل";
 "Install" = "تثبيت";
@@ -37,15 +37,11 @@
 "Tap Download. If iOS asks for permission, choose Allow, then open Settings → Profile Downloaded." = "اضغط تنزيل. إذا طلب iOS الإذن، اختر سماح، ثم افتح الإعدادات ← تم تنزيل ملف شخصي.";
 "Download profile" = "تنزيل الملف";
 "I downloaded it" = "تم التنزيل";
-"Install the profile" = "ثبّت الملف الشخصي";
-"In Settings, open General → VPN & Device Management, select the downloaded profile, then tap Install." = "من الإعدادات، افتح عام ← VPN وإدارة الجهاز، واختر الملف المنزّل ثم اضغط تثبيت.";
 "Open Settings" = "افتح الإعدادات";
-"I installed it" = "تم التثبيت";
-"Enable full trust" = "فعّل الثقة الكاملة";
-"Open General → About → Certificate Trust Settings and turn on full trust for Location Spoofer CA." = "افتح عام ← حول ← إعدادات الثقة بالشهادات، وفعّل الثقة الكاملة لشهادة Location Spoofer CA.";
-"I enabled trust" = "تم تفعيل الثقة";
+"First install Location Spoofer CA in General → VPN & Device Management. Then open General → About → Certificate Trust Settings and enable full trust." = "أولًا ثبّت Location Spoofer CA من عام ← VPN وإدارة الجهاز. ثم افتح عام ← حول ← إعدادات الثقة بالشهادات وفعّل الثقة الكاملة.";
+"I installed and trusted it" = "ثبّت الملف وفعّلت الثقة";
 "Completed" = "مكتمل";
-"When all three steps are checked, XS Location verifies the setup." = "بعد تأكيد الخطوات الثلاث، سيتحقق XS Location من الإعداد.";
+"When both steps are complete, XS Location verifies the setup." = "بعد إكمال الخطوتين، سيتحقق XS Location من الإعداد.";
 "Wi-Fi proxy settings" = "إعدادات بروكسي الواي فاي";
 "Tap to enlarge: Settings → Wi-Fi → ⓘ → HTTP Proxy → Manual." = "اضغط للتكبير: الإعدادات ← واي فاي ← ⓘ ← بروكسي HTTP ← يدوي.";
 "Tap to enlarge: General → VPN & Device Management → profile → Install." = "اضغط للتكبير: عام ← VPN وإدارة الجهاز ← الملف الشخصي ← تثبيت.";

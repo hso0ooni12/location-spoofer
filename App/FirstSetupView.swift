@@ -428,7 +428,7 @@ struct FirstSetupView: View {
                 Text("Install and trust the profile")
                     .font(.system(size: 27, weight: .bold, design: .rounded))
                     .foregroundStyle(XSTheme.ink)
-                Text("Complete these three checks in iOS Settings. Your location stays protected until the profile is trusted.")
+                Text("Install the downloaded profile, then enable full trust in iOS Settings. XS Location verifies the setup before you begin.")
                     .font(.subheadline)
                     .foregroundStyle(XSTheme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -466,32 +466,23 @@ struct FirstSetupView: View {
                 markComplete: { downloadedDone = true }
             )
             XSSettingsGuidePreview(kind: .install)
-            certificateCard(
-                stepNumber: 2,
-                title: "Install the profile",
-                icon: "gearshape.fill",
-                description: "In Settings, open General → VPN & Device Management, select the downloaded profile, then tap Install.",
-                actionTitle: "Open Settings",
-                confirmationTitle: "I installed it",
-                actionIcon: "gearshape.fill",
-                complete: installedDone,
-                action: { openSettings(.general) },
-                markComplete: { installedDone = true }
-            )
             XSSettingsGuidePreview(kind: .trust)
             certificateCard(
-                stepNumber: 3,
-                title: "Enable full trust",
+                stepNumber: 2,
+                title: "Install and trust the profile",
                 icon: "checkmark.shield.fill",
-                description: "Open General → About → Certificate Trust Settings and turn on full trust for Location Spoofer CA.",
+                description: "First install Location Spoofer CA in General → VPN & Device Management. Then open General → About → Certificate Trust Settings and enable full trust.",
                 actionTitle: "Open Settings",
-                confirmationTitle: "I enabled trust",
+                confirmationTitle: "I installed and trusted it",
                 actionIcon: "checkmark.shield.fill",
-                complete: trustedDone,
+                complete: installedDone && trustedDone,
                 action: { openSettings(.general) },
-                markComplete: { trustedDone = true }
+                markComplete: {
+                    installedDone = true
+                    trustedDone = true
+                }
             )
-            Label("When all three steps are checked, XS Location verifies the setup.", systemImage: "checkmark.shield")
+            Label("When both steps are complete, XS Location verifies the setup.", systemImage: "checkmark.shield")
                 .font(.footnote)
                 .foregroundStyle(XSTheme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)

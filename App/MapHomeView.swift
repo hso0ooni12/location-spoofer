@@ -453,6 +453,8 @@ struct MapHomeView: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(XSTheme.secondaryText)
                 TextField("Search places or coordinates", text: $searchText)
+                    .foregroundStyle(XSTheme.ink)
+                    .tint(XSTheme.accent)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search).onSubmit(doSearch)
                 if isSearching { ProgressView().controlSize(.small) }
                 else if !searchText.isEmpty {
@@ -463,7 +465,7 @@ struct MapHomeView: View {
                         searchResults = []
                         searchError = ""
                     } label: {
-                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(XSTheme.secondaryText)
                     }.buttonStyle(.plain)
                 }
                 Button(action: doSearch) {
@@ -528,8 +530,8 @@ struct MapHomeView: View {
                             Image(systemName: "mappin.and.ellipse")
                                 .foregroundStyle(.red)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(r.name).font(.subheadline.weight(.semibold)).lineLimit(1)
-                                if !r.subtitle.isEmpty { Text(r.subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+                                Text(r.name).font(.subheadline.weight(.semibold)).foregroundStyle(XSTheme.ink).lineLimit(1)
+                                if !r.subtitle.isEmpty { Text(r.subtitle).font(.caption).foregroundStyle(XSTheme.secondaryText).lineLimit(1) }
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -543,7 +545,7 @@ struct MapHomeView: View {
                 if r.id != searchResults.last?.id { Divider().padding(.leading, 46) }
             }
         }
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(.white.opacity(0.98), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
@@ -554,7 +556,10 @@ struct MapHomeView: View {
             // 当前选点
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(mapState.displayName ?? AppLocalization.string("当前选点")).font(.subheadline.weight(.semibold)).lineLimit(1)
+                    Text(mapState.displayName ?? AppLocalization.string("当前选点"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(XSTheme.ink)
+                        .lineLimit(1)
                     coordinateRow(label: "GCJ-02(国内)", system: .gcj02)
                     coordinateRow(label: "WGS-84(国际)", system: .wgs84)
                 }
@@ -569,7 +574,7 @@ struct MapHomeView: View {
                 } label: {
                     (spoofState == .active ? Text("无法生效？") : Text("无法取消？"))
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(XSTheme.secondaryText)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(Color.secondary.opacity(0.1), in: Capsule())
@@ -595,7 +600,9 @@ struct MapHomeView: View {
             }
             // 收藏
             if favorites.favorites.isEmpty {
-                Text("搜索或点击地图选点后，保存为收藏。").font(.footnote).foregroundStyle(.secondary)
+                Text("搜索或点击地图选点后，保存为收藏。")
+                    .font(.footnote)
+                    .foregroundStyle(XSTheme.secondaryText)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) { ForEach(favorites.favorites) { f in favoriteChip(f) } }.padding(.vertical, 2)
@@ -883,7 +890,7 @@ struct MapHomeView: View {
                 editName = f.name
             } label: {
                 Image(systemName: "pencil").font(.caption2).frame(width: 32, height: 36).contentShape(Rectangle())
-            }.buttonStyle(.plain).foregroundStyle(.primary.opacity(0.55))
+            }.buttonStyle(.plain).foregroundStyle(XSTheme.secondaryText)
             Divider().frame(height: 22)
             Button(role: .destructive) { favorites.delete(f) } label: {
                 Image(systemName: "trash").font(.caption.weight(.semibold)).frame(width: 36, height: 36).contentShape(Rectangle())
@@ -891,6 +898,7 @@ struct MapHomeView: View {
         }
         .background((favorites.selectedFavoriteID == f.id ? Color.red.opacity(0.14) : Color.secondary.opacity(0.12)), in: Capsule())
         .overlay(Capsule().stroke(favorites.selectedFavoriteID == f.id ? Color.red.opacity(0.7) : Color.clear))
+        .foregroundStyle(XSTheme.ink)
     }
 
     @MainActor
@@ -937,12 +945,12 @@ struct MapHomeView: View {
         return HStack(spacing: 6) {
             Text(label)
                 .font(.caption2.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(XSTheme.secondaryText)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
             Text(text)
                 .font(.caption.monospaced())
-                .foregroundStyle(copiedCoordinateSystem == system ? .green : .secondary)
+                .foregroundStyle(copiedCoordinateSystem == system ? .green : XSTheme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .allowsTightening(true)
