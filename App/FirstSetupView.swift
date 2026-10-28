@@ -26,8 +26,8 @@ enum SetupStep: Int, CaseIterable {
     var title: String {
         switch self {
         case .mode: return "选择模式"
-        case .proxy: return "配置 Wi-Fi 代理"
-        case .cert: return "初始化 CA 证书"
+        case .proxy: return "Wi-Fi"
+        case .cert: return "证书"
         case .thirdPartyClient: return "选择客户端"
         case .thirdPartyImport: return "导入并检测"
         }
@@ -201,9 +201,9 @@ struct FirstSetupView: View {
     private var visibleSteps: [SetupStep] {
         switch step {
         case .mode:
-            return [.mode]
+            return [.proxy, .cert]
         case .proxy, .cert:
-            return [.mode, .proxy, .cert]
+            return [.proxy, .cert]
         case .thirdPartyClient, .thirdPartyImport:
             return [.mode, .thirdPartyClient, .thirdPartyImport]
         }
@@ -309,44 +309,65 @@ struct FirstSetupView: View {
     }
 
     private var proxyStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("第 1 步")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                Text("设置当前 Wi-Fi 代理")
+                    .font(.title2.bold())
+                Text("设置 → 无线局域网 → 当前网络右侧 ⓘ → HTTP 代理 → 手动。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
             if !setup.message.isEmpty {
                 Label(setup.message, systemImage: "exclamationmark.triangle.fill")
                     .font(.footnote)
                     .foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            GroupBox(label: Label("先配置 Wi-Fi 系统代理", systemImage: "wifi")) {
-                Text("在当前 Wi-Fi 的详情页，将「HTTP 代理」设为「手动」：服务器填 127.0.0.1，端口填 8888。配置后点击下方「完成」。检测会自动判断是 Wi-Fi 代理还是证书信任有问题。")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 4)
+            VStack(spacing: 0) {
+                proxyValueRow(title: "服务器", value: "127.0.0.1")
+                Divider().padding(.leading, 16)
+                proxyValueRow(title: "端口", value: "8888")
             }
-            setupScreenshot(
-                assetName: "AppModeWiFiProxy",
-                title: "Wi-Fi 代理设置",
-                caption: "1 选择手动，2 填写服务器 127.0.0.1，3 填写端口 8888。"
-            )
-            HStack(spacing: 12) {
-                Button { UIPasteboard.general.string = "127.0.0.1:8888" } label: {
-                    Label("复制地址", systemImage: "doc.on.doc").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                Button { openSettings(.wifi) } label: {
-                    Label("打开 Wi-Fi 设置", systemImage: "gearshape").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+
+            Button { openSettings(.wifi) } label: {
+                Label("打开 Wi-Fi 设置", systemImage: "wifi")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+
+            Text("设置完成后返回此处并点“继续”。")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 
     private var certificateStep: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("第 2 步")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
+                Text("下载并信任描述文件")
+                    .font(.title2.bold())
+                Text("下载证书后，在 iOS 设置中安装并开启完全信任。")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            if !setup.message.isEmpty {
+                Label(setup.message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             certificateCard(
-                title: "第 1 步：下载证书",
+                title: "下载描述文件",
                 icon: "arrow.down.circle",
-                description: "下载本机随机生成的 CA 根证书。私钥仅保存在此设备的钥匙串中，不会随证书文件导出。App 会弹出 Safari 下载页；出现配置描述文件下载提示时，选择「允许」。",
-                actionTitle: "打开下载页",
+                description: "点“下载”，然后在 iOS 提示中选择“允许”。",
+                actionTitle: "下载",
                 actionIcon: "arrow.down.circle.fill",
                 complete: downloadedDone,
                 action: {
@@ -361,36 +382,47 @@ struct FirstSetupView: View {
                 markComplete: { downloadedDone = true }
             )
             certificateCard(
-                title: "第 2 步：安装证书",
-                icon: "square.and.arrow.down",
-                description: "下载完成后打开系统「设置」。如果顶部显示「已下载描述文件」，点进去安装；否则进入「通用 → VPN 与设备管理」，找到 Location Spoofer CA 并完成安装。",
-                actionTitle: "去安装",
-                actionIcon: "gearshape",
-                complete: installedDone,
-                action: { openSettings(.general) },
-                markComplete: { installedDone = true }
-            )
-            setupScreenshot(
-                assetName: "AppModeCertificateInstall",
-                title: "安装证书",
-                caption: "1 在「VPN 与设备管理」中打开 Location Spoofer CA 描述文件并完成安装。"
-            )
-            certificateCard(
-                title: "第 3 步：信任证书",
+                title: "安装并信任",
                 icon: "shield.checkered",
-                description: "安装后进入「设置 → 通用 → 关于本机 → 证书信任设置」，找到 Location Spoofer CA 并开启完全信任。iOS 保留钥匙串数据时，重装 App 会继续复用同一证书。",
-                actionTitle: "去信任",
+                description: "在设置顶部点“已下载描述文件”；若没有，进入“通用 → VPN 与设备管理”安装。再到“通用 → 关于本机 → 证书信任设置”，为 Location Spoofer CA 开启完全信任。",
+                actionTitle: "打开设置",
                 actionIcon: "shield.checkered",
-                complete: trustedDone,
+                complete: installedDone && trustedDone,
                 action: { openSettings(.general) },
-                markComplete: { trustedDone = true }
+                markComplete: {
+                    installedDone = true
+                    trustedDone = true
+                }
             )
-            setupScreenshot(
-                assetName: "AppModeCertificateTrust",
-                title: "信任证书",
-                caption: "1 在「证书信任设置」中为 Location Spoofer CA 开启完全信任。"
-            )
+            Text("完成后返回此处并点“继续”。")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    private func proxyValueRow(title: LocalizedStringKey, value: String) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.system(.body, design: .monospaced).weight(.semibold))
+            }
+            Spacer()
+            Button {
+                UIPasteboard.general.string = value
+            } label: {
+                Image(systemName: "doc.on.doc")
+                    .font(.body.weight(.medium))
+                    .frame(width: 42, height: 42)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("复制"))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 
     private var thirdPartyMITMWarning: some View {
@@ -795,7 +827,7 @@ struct FirstSetupView: View {
             Button {
                 verifyAfterProxyConfirmation()
             } label: {
-                actionLabel("完成")
+                actionLabel("继续")
             }
             .buttonStyle(.borderedProminent)
             .disabled(isVerifying)
@@ -803,7 +835,7 @@ struct FirstSetupView: View {
             Button {
                 verifyAfterCertificateConfirmation()
             } label: {
-                actionLabel("完成")
+                actionLabel("继续")
             }
             .buttonStyle(.borderedProminent)
             .disabled(!certificateStepsComplete || isVerifying)

@@ -51,8 +51,10 @@ struct ContentView: View {
     private func bootstrap() async {
         guard runtimeMode.hasSelectedMode else {
             ProxyManager.shared.stop()
-            RuntimeLogger.info("APP", "Startup", "尚未选择运行模式，跳过本地 CA 和代理初始化")
-            setup.requestModeSelection()
+            runtimeMode.setMode(.localWiFi)
+            RuntimeLogger.info("APP", "Startup", "首次启动默认使用本机 Wi-Fi 模式")
+            await setup.prepareLocalServices()
+            setup.requestSetup()
             phase = .setup
             return
         }
