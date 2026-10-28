@@ -60,7 +60,7 @@ struct MapHomeView: View {
     @ObservedObject private var net = NetworkMonitor.shared
 
     @State private var searchText = ""
-    @AppStorage("xs-location.map-style") private var mapStyleRawValue = MKMapType.standard.rawValue
+    @AppStorage("xs-location.map-style") private var mapStyleName = "standard"
     @State private var searchResults: [SearchLocationResult] = []
     @State private var isSearching = false
     @State private var searchRequestID: UInt64 = 0
@@ -103,7 +103,7 @@ struct MapHomeView: View {
     @State private var hasLoggedSpoofDiagnosis = false
 
     private var selectedMapType: MKMapType {
-        MKMapType(rawValue: mapStyleRawValue) ?? .standard
+        mapStyleName == "satellite" ? .satellite : .standard
     }
 
     init(setup: SetupCoordinator) {
@@ -495,7 +495,7 @@ struct MapHomeView: View {
         let isSelected = selectedMapType.rawValue == style.rawValue
         return Button {
             withAnimation(.easeInOut(duration: 0.22)) {
-                mapStyleRawValue = style.rawValue
+                mapStyleName = style.rawValue == MKMapType.satellite.rawValue ? "satellite" : "standard"
             }
         } label: {
             Label(title, systemImage: icon)
