@@ -1,0 +1,87 @@
+name: Build acheong08 Location Spoofer unsigned IPA
+
+on:
+  push:
+    branches:
+      - build/acheong-original-20261104
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout original upstream source
+        uses: actions/checkout@v4
+        with:
+          repository: acheong08/ios-location-spoofer
+          ref: bfb44fa3b00e2cc8820536fb58e375d7269ef90a
+          path: source
+          persist-credentials: false
+
+      - name: Select Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: false
+
+      - name: Build iOS Go static library
+        working-directory: source/GoSpoofer
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./make.sh
+          ./make.sh
+          test -s build/libgolocationspoofer.a
+
+      - name: Build original Swift iPhone app without signing
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project location-spoofer.xcodeproj \
+            -scheme location-spoofer \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/LocationSpooferBuild" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            PROVISIONING_PROFILE_SPECIFIER='' \
+            DEVELOPMENT_TEAM='' \
+            build
+
+      - name: Package and verify unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/LocationSpooferBuild/Build/Products/Release-iphoneos/location-spoofer.app"
+          test -d "$APP"
+          test -d "$APP/PlugIns/location-spoofer-tunnel.appex"
+          mkdir -p "$RUNNER_TEMP/IpaOutput/Payload"
+          ditto "$APP" "$RUNNER_TEMP/IpaOutput/Payload/location-spoofer.app"
+          cd "$RUNNER_TEMP/IpaOutput"
+          zip -qry acheong-ios-location-spoofer-unsigned.ipa Payload
+          unzip -t acheong-ios-location-spoofer-unsigned.ipa
+          shasum -a 256 acheong-ios-location-spoofer-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: acheong-original-ios-location-spoofer-unsigned-ipa
+          path: ${{ runner.temp }}/IpaOutput/acheong-ios-location-spoofer-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
