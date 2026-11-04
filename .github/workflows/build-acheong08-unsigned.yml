@@ -1,0 +1,81 @@
+name: Build acheong08 iOS Location Spoofer IPA
+
+on:
+  push:
+    branches:
+      - build-acheong08-ios-location-spoofer-20261104
+    paths:
+      - .github/workflows/build-acheong08-unsigned.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ipa:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - name: Check out original source
+        uses: actions/checkout@v4
+        with:
+          repository: acheong08/ios-location-spoofer
+          ref: bfb44fa3b00e2cc8820536fb58e375d7269ef90a
+
+      - name: Check toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install Go for the iOS tunnel library
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: GoSpoofer/go.sum
+
+      - name: Build arm64 Go static library
+        run: |
+          chmod +x GoSpoofer/make.sh
+          GoSpoofer/make.sh
+          file GoSpoofer/build/libgolocationspoofer.a
+
+      - name: Build original iOS app and tunnel without signing
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project location-spoofer.xcodeproj \
+            -scheme location-spoofer \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/SpooferDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            PROVISIONING_PROFILE_SPECIFIER='' \
+            build 2>&1 | tee "$RUNNER_TEMP/spoofer-build.log" | tail -n 180
+
+      - name: Package and verify unsigned IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/SpooferDerivedData/Build/Products/Release-iphoneos/location-spoofer.app"
+          test -d "$APP"
+          test -d "$APP/PlugIns/location-spoofer-tunnel.appex"
+          file "$APP/location-spoofer"
+          xcrun lipo -info "$APP/location-spoofer"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          ditto "$APP" "$RUNNER_TEMP/ipa/Payload/location-spoofer.app"
+          cd "$RUNNER_TEMP/ipa"
+          zip -qr "$GITHUB_WORKSPACE/ios-location-spoofer-unsigned.ipa" Payload
+          unzip -t "$GITHUB_WORKSPACE/ios-location-spoofer-unsigned.ipa" | tail -n 1
+          shasum -a 256 "$GITHUB_WORKSPACE/ios-location-spoofer-unsigned.ipa"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-location-spoofer-unsigned-ipa
+          path: ios-location-spoofer-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
