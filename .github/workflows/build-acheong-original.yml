@@ -52,6 +52,35 @@ jobs:
           ./make.sh
           test -s build/libgolocationspoofer.a
 
+      - name: Fix syntax typos in upstream Swift sources
+        working-directory: source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          
+          fixes = {
+              "App/MapHomeView.swift": [
+                  (r'DiagLog.add("[cold-start] finish failed:\(errMsg ?? "VPN start failed")',
+                   r'DiagLog.add("[cold-start] finish failed:\(errMsg ?? "VPN start failed")")'),
+                  (r'DiagLog.add("[hot-restart] finish failed:\(errMsg ?? "VPN reconnect failed")',
+                   r'DiagLog.add("[hot-restart] finish failed:\(errMsg ?? "VPN reconnect failed")")'),
+              ],
+              "App/SettingsView.swift": [
+                  ('Text("No logs yet. Run "Set as Location" once and come back.")',
+                   "Text(\"No logs yet. Run 'Set as Location' once and come back.\")"),
+              ],
+          }
+          for filename, changes in fixes.items():
+              path = Path(filename)
+              code = path.read_text()
+              for old, new in changes:
+                  if code.count(old) != 1:
+                      raise RuntimeError(f"Expected exactly one source occurrence of: {old}")
+                  code = code.replace(old, new)
+              path.write_text(code)
+          PY
+
       - name: Regenerate current Xcode project from upstream project.yml
         working-directory: source
         shell: bash
