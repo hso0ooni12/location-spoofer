@@ -52,16 +52,19 @@ jobs:
           ./make.sh
           test -s build/libgolocationspoofer.a
 
+      - name: Regenerate current Xcode project from upstream project.yml
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install xcodegen
+          xcodegen generate
+          
       - name: Build original Swift iPhone app without signing
         working-directory: source
         shell: bash
         run: |
           set -euo pipefail
-          sed -i '' 's/objectVersion = 77;/objectVersion = 56;/' location-spoofer.xcodeproj/project.pbxproj
-          sed -i '' 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' location-spoofer.xcodeproj/project.pbxproj
-          # The checked-in project references AppIcon.icon, which is absent upstream.
-          # Keep the real Assets.xcassets icons and drop only the stale file reference.
-          sed -i '' '/AppIcon.icon/d' location-spoofer.xcodeproj/project.pbxproj
           xcodebuild \
             -project location-spoofer.xcodeproj \
             -scheme location-spoofer \
