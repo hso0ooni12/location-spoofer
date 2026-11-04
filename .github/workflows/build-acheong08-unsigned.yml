@@ -39,6 +39,19 @@ jobs:
           GoSpoofer/make.sh
           file GoSpoofer/build/libgolocationspoofer.a
 
+      - name: Regenerate project to include all current Swift screens
+        run: |
+          brew install xcodegen
+          python3 - <<'PY'
+          from pathlib import Path
+          project = Path('project.yml')
+          content = project.read_text()
+          needle = '          - "libgolocationspoofer.a"'
+          assert content.count(needle) == 1, 'Unexpected project configuration'
+          project.write_text(content.replace(needle, needle + '\n          - "golocationspoofer"', 1))
+          PY
+          xcodegen generate
+
       - name: Build original iOS app and tunnel without signing
         shell: bash
         run: |
