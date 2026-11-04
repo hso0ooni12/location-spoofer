@@ -23,10 +23,17 @@ jobs:
           path: source
           persist-credentials: false
 
-      - name: Select Xcode
+      - name: Select iOS 18-compatible Xcode
         shell: bash
         run: |
           set -euo pipefail
+          XCODE_APP="$(find /Applications -maxdepth 1 -name 'Xcode_16*.app' -print | sort -V | tail -n 1)"
+          if [ -z "$XCODE_APP" ]; then
+            echo "::error::No Xcode 16 installation found"
+            ls -d /Applications/Xcode*.app || true
+            exit 1
+          fi
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-version
 
@@ -50,6 +57,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sed -i '' 's/objectVersion = 77;/objectVersion = 56;/' location-spoofer.xcodeproj/project.pbxproj
+          sed -i '' 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' location-spoofer.xcodeproj/project.pbxproj
           xcodebuild \
             -project location-spoofer.xcodeproj \
             -scheme location-spoofer \
